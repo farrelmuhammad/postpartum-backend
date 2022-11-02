@@ -1,6 +1,83 @@
-const { User } = require("../models");
+const { User, Profile } = require("../models");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+
+const getUsers = async (req, res) => {
+    try {
+        const users = await User.findAll({
+            attributes: ["id", "username", "role"],
+            include: {
+                model: Profile,
+                required: true,
+                attributes: [
+                    "name",
+                    "address",
+                    "phone",
+                    "age",
+                    "gender",
+                    "email"
+                ],
+            },
+        });
+        res.status(200);
+        return res.json({
+            message: "Success get all users",
+            statusCode: 200,
+            data: users,
+        });
+    } catch (error) {
+        res.status(500).json({
+            status: 500,
+            message: "Something went wrong!",
+            error: error.stack,
+        });
+    }
+};
+
+const getUserById = async (req, res) => {
+    const userId = req.params.id;
+    try {
+        const users = await User.findOne({
+            attributes: ["id", "username", "role"],
+            include: {
+                model: Profile,
+                required: true,
+                attributes: [
+                    "name",
+                    "address",
+                    "phone",
+                    "age",
+                    "gender",
+                    "email"
+                ],
+            },
+            where: {
+                id: userId,
+            },
+        });
+        if (!users) {
+            res.status(404);
+            return res.json({
+                message: "User does not exist",
+                statusCode: 404,
+            });
+        } else {
+            res.status(200);
+            return res.json({
+                message: "Success get user",
+                statusCode: 200,
+                data: users,
+            });
+        }
+    } catch (error) {
+        res.status(500);
+        return res.json({
+            status: 500,
+            message: "Something went wrong!",
+            error: error.stack,
+        });
+    }
+};
 
 const register = async (req, res) => {
     const { username, password, role } = req.body;
@@ -140,4 +217,11 @@ const logout = async (req, res) => {
     }
 };
 
-module.exports = { register, login, whoami, logout };
+module.exports = {
+    getUsers,
+    getUserById,
+    register,
+    login,
+    whoami,
+    logout
+};
