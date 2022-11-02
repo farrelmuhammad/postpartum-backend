@@ -105,10 +105,10 @@ const register = async (req, res) => {
             password: hashPassword,
             role: role,
         });
-        // await Profiles.create({
-        //     UserId: user.id,
-        //     name: name,
-        // });
+        await Profile.create({
+            UserId: user.id,
+            name: name,
+        });
         res.status(201);
         return res.json({
             message: "Register success!",
@@ -217,11 +217,82 @@ const logout = async (req, res) => {
     }
 };
 
+const updateProfile = async (req, res) => {
+    const {
+        name,
+        address,
+        phone,
+        age,
+        gender,
+        email
+    } = req.body;
+    try {
+        if (!req.user.userId) {
+            res.status(403);
+            return res.json({
+                message: "Cannot update profile!",
+                statusCode: 403,
+            });
+        }
+        if (!name || !age || !address || !phone || !gender || !email) {
+            res.status(400);
+            return res.json({
+                status: 400,
+                message: "Please fill in each input field!",
+            });
+        }
+
+        await Profile.update(
+            {
+                name,
+                address,
+                phone,
+                age,
+                gender,
+                email
+            },
+            {
+                where: {
+                    UserId: req.user.userId,
+                },
+            }
+        );
+        const afterUpdate = await Profile.findOne({
+            attributes: [
+                "name",
+                "address",
+                "phone",
+                "age",
+                "gender",
+                "email"
+            ],
+            where: {
+                UserId: req.user.userId,
+            },
+        });
+        res.status(200);
+        return res.json({
+            message: "Update profile Success!",
+            statusCode: 200,
+            data: afterUpdate,
+        });
+    } catch (error) {
+        res.status(500);
+        return res.json({
+            status: 500,
+            message: "Something went wrong!",
+            error: error.stack,
+        });
+    }
+};
+
+
 module.exports = {
     getUsers,
     getUserById,
     register,
     login,
     whoami,
-    logout
+    logout,
+    updateProfile
 };
